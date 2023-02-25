@@ -1,0 +1,13 @@
+from,to,weight
+xenotime-(yb),hingganite-(yb),1.0
+xenotime-(yb),caysichite-(y),1.0
+xenotime-(yb),keiviite-(yb),1.0
+hingganite-(yb),caysichite-(y),1.0
+hingganite-(yb),keiviite-(yb),1.0
+caysichite-(y),keiviite-(yb),1.0
+hingganite-(yb),xenotime-(yb),1.0
+caysichite-(y),xenotime-(yb),1.0
+keiviite-(yb),xenotime-(yb),1.0
+caysichite-(y),hingganite-(yb),1.0
+keiviite-(yb),hingganite-(yb),1.0
+keiviite-(yb),caysichite-(y),1.0

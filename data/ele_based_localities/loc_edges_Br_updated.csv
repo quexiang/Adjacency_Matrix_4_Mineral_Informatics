@@ -1,0 +1,13 @@
+from,to,weight
+perroudite,bromargyrite,4.0
+demicheleite-(br),lucabindiite,1.0
+tedhadleyite,vasilyevite,1.0
+grechishchevite,kuzminite,2.0
+grechishchevite,kadyrelite,2.0
+kuzminite,kadyrelite,2.0
+bromargyrite,perroudite,4.0
+lucabindiite,demicheleite-(br),1.0
+vasilyevite,tedhadleyite,1.0
+kuzminite,grechishchevite,2.0
+kadyrelite,grechishchevite,2.0
+kadyrelite,kuzminite,2.0

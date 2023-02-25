@@ -1,0 +1,5 @@
+from,to,weight
+ramanite-(rb),rubicline,1.0
+voloshinite,rubicline,1.0
+rubicline,ramanite-(rb),1.0
+rubicline,voloshinite,1.0
