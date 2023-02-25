@@ -1,0 +1,1 @@
+The edges between paired elements are weighted by the mineral count with considering the abundance of elements in Earth’s Crust.

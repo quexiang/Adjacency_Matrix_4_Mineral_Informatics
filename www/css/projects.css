@@ -1,0 +1,352 @@
+
+.maindiv
+{
+    background-color: #282C34;
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+}
+
+.banner
+{
+    position: absolute;
+    left:8px;
+    top: 8px;
+    width: 681px;
+    height: 42px;
+    background-image: url("banner.png");
+}
+
+.tablediv
+{
+    position:absolute;
+    top: 58px;
+    left: 160px;
+    bottom: 8px;
+    right: 160px;
+    overflow:auto;
+    background-color:#282C34;
+    color:#000000;
+    font-family: sans-serif;
+    padding:4px;
+}
+
+.leftdiv
+{
+    position:absolute;
+    top:58px;
+    left:8px;
+    width:140px;
+    bottom:8px;
+    overflow:auto;
+}
+
+.rightdiv
+{
+    position:absolute;
+    top:58px;
+    right:8px;
+    width:140px;
+    bottom:8px;
+    overflow:auto;
+}
+
+.linkpanel
+{
+    cursor: pointer;
+    cursor: hand;
+    color:#ffffff;
+    position: absolute;
+    right: 16px;
+    top: 8px;
+    height: 42px;
+    line-height: 42px;
+}
+
+A:link {text-decoration: none; color:#FFFFFF; outline : none; border : 0;}
+A:visited {text-decoration: none; color:#FFFFFF; outline : none; border : 0;}
+A:active {text-decoration: none; color:#FFFFFF; outline : none; border : 0;}
+A:hover {text-decoration: underline; color:#FFFFFF; outline : none; border : 0;}
+
+.button
+{
+    cursor: pointer;
+    cursor: hand;
+    text-align: center;
+    overflow: hidden;
+    margin:4px;
+    border-radius: 4px 4px 4px 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: small;
+    padding: 2px;
+    border: solid 1px #404040;
+    height: 20px;
+	line-height: 20px;
+    color: #FFFFFF;
+    background: linear-gradient(#282C34, #000000);
+}
+
+.button:hover
+{
+    background: linear-gradient(#282C34, #202020);
+}
+
+.button:active
+{
+	box-shadow: inset 1px 1px 1px #000000;
+    background: linear-gradient(#282C34, #202020);
+}
+
+.roundcorners
+{
+	border:2px solid #202020;
+    border-radius: 4px 4px 4px 4px;
+}
+
+.label
+{
+    font-family: sans-serif;
+    font-size: small;
+    overflow: hidden;
+    color: #FFFFFF;
+    margin:4px;
+    width: 120px;
+}
+
+.colorkey
+{
+    font-family: sans-serif;
+    font-size: small;
+    overflow: hidden;
+    color: #000000;
+    margin: 4px;
+    padding: 2px;
+    width: 120px;
+}
+
+select
+{
+    font-family: sans-serif;
+    font-size: small;
+    overflow: hidden;
+    margin:4px;
+    width: 124px;
+}
+
+.labelbold
+{
+    font-weight: bold;
+}
+
+
+table
+{
+    border-width: 0px;
+    table-layout:fixed;
+}
+
+td
+{
+    border-width: 0px;
+    padding:0px;
+    font-family: sans-serif;
+    font-size: small;
+    margin:4px;
+}
+
+tr
+{
+    border-width: 0px;
+    padding:0px;
+}
+
+th
+{
+    border-width: 0px;
+    padding: 4px;
+    font-family: sans-serif;
+    font-size: small;
+    overflow: hidden;
+    margin:4px;
+    font-weight: bold;
+    text-align: left;
+}
+
+.thelementname
+{
+    border-width: 0px;
+    padding: 4px;
+    font-family: sans-serif;
+    font-size: large;
+    overflow: hidden;
+    margin:4px;
+    font-weight: bold;
+    text-align: center;
+}
+
+hr
+{
+    height:1px;
+}
+
+input[type=text]
+{
+    margin: 4px;
+    border:1px solid #808080;
+}
+
+input[type=number]
+{
+    margin: 4px;
+    border:1px solid #808080;
+}
+
+input[type=radio]
+{
+    margin: 4px;
+    margin-left: 4px;
+    border:1px solid #808080;
+    width: 124px;
+}
+
+.red
+{
+	color: #FF0000;
+}
+
+.green
+{
+	color: #00C000;
+}
+
+.redbg
+{
+	background-color: #FF0000;
+}
+
+.greenbg
+{
+	background-color: #00A000;
+}
+
+.cell
+{
+    width: 5%;
+    height: 10%;
+}
+
+.elementcell
+{
+    font-family: sans-serif;
+    font-size: 8px;
+    text-align: center;
+    overflow: hidden;
+    border:2px solid #404040;
+    border-radius: 4px 4px 4px 4px;
+    cursor: pointer;
+}
+
+.elementcellfaded
+{
+    opacity: 0.1;
+}
+
+.chemicalsymbol
+{
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.groupname
+{
+    font-family: sans-serif;
+    font-size: 8px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.headingcell
+{
+    text-align: center;
+    color: #FFFFFF;
+}
+
+
+.alkalimetal
+{
+    background-color: #FF6666;
+}
+
+
+.alkalineearthmetal
+{
+    background-color: #ffdead;
+}
+
+.lanthanide
+{
+    background-color: #ffbfff;
+}
+
+.actinide
+{
+    background-color: #ff99cc;
+}
+
+.transitionmetal
+{
+    background-color: #ffc0c0;
+}
+
+.posttransitionmetal
+{
+    background-color: #cccccc;
+}
+
+.metalloid
+{
+    background-color: #cccc99;
+}
+
+.reactivenonmetal
+{
+    background-color: #f0ff8f;
+}
+
+
+.noblegas
+{
+    background-color: #c0ffff;
+}
+
+
+.unknown
+{
+    background-color: #e8e8e8;
+}
+
+
+.sblock
+{
+    background-color: #ff9999;
+}
+
+.dblock
+{
+    background-color: #9ecafa;
+}
+
+.fblock
+{
+    background-color: #9bff99;
+}
+
+.pblock
+{
+    background-color: #fdff8c;
+}
