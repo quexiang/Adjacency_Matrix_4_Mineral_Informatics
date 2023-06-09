@@ -1,1 +1,1 @@
-oxygen spinel 
+- oxygen spinel 

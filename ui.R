@@ -67,9 +67,9 @@ header <- dashboardHeader(title = title)
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("About", tabName = "about", icon = icon("info-circle")),
+    menuItem("Periodic Table", tabName = "ptable", icon = icon("users")),
     menuItem("Plot", tabName = "plot", icon = icon("bar-chart")),
-    menuItem("Periodic Table", tabName = "ptable", icon = icon("users"))
+    menuItem("About", tabName = "about", icon = icon("info-circle"))
   ),
   data_source_md,
   data_source_sel,
@@ -84,10 +84,10 @@ body <- dashboardBody(
                            status = "info", width = 12, fluidRow(column(4, ordering), column(4, annotate), column(4, alpha)), collapsible = TRUE),
        box(width = 12, plot)),
        tabItem("ptable",box(title="Periodic Table",width="100%",height = "620px",status='primary',#height="100%",
-                       tags$hr(),
-                       tags$link(rel = "stylesheet",type = "text/css",href = "css/projects.css"),
-                       tags$div(class = "maindiv",
-                         tags$div(class = "roundcorners leftdiv",HTML('  <table style="width:100%;">
+                            tags$hr(),
+                            tags$link(rel = "stylesheet",type = "text/css",href = "css/projects.css"),
+                            tags$div(class = "maindiv",
+                                     tags$div(class = "roundcorners leftdiv",HTML('  <table style="width:100%;">
                               	<tr><td><div class="label">Name</div></td></tr>
                               	<tr><td><input type="text" id="namefilter" style="width:124px" /></td></tr>
                   
@@ -172,7 +172,7 @@ body <- dashboardBody(
                               </tr>
                               </table>
                       	</div>'),br()),
-                        HTML(' 	<div id="periodictablediv" class="roundcorners tablediv">
+                                     HTML(' 	<div id="periodictablediv" class="roundcorners tablediv">
                     			<table id="periodictable" style="width: 100%; height: 100%;"></table>
                     		  </div>
                         	<div class="roundcorners rightdiv">
@@ -214,11 +214,11 @@ body <- dashboardBody(
                                 </table>
                     
                     		</div>')
-                         ),
-                       tags$div(id="infoboxbackground",style="background-color: #000000; position: absolute;left: 0px; right: 0px; top: 0px; bottom: 0px; opacity: 0.8; visibility: hidden;"
-                       ),
-                       tags$div(id ="infobox",class ="border roundcorners",style="position:absolute;  width: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #FFFFFF; visibility: hidden;",
-                       HTML('<table style="width:100%;">
+                            ),
+                            tags$div(id="infoboxbackground",style="background-color: #000000; position: absolute;left: 0px; right: 0px; top: 0px; bottom: 0px; opacity: 0.8; visibility: hidden;"
+                            ),
+                            tags$div(id ="infobox",class ="border roundcorners",style="position:absolute;  width: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #FFFFFF; visibility: hidden;",
+                                     HTML('<table style="width:100%;">
                           		<tr><th colspan="2" id="infoName" class="thelementname"></th>
                           		<tr><th>Atomic number</th><td id="infoAtomicNumber"></th>
                               	<tr><th>Chemical Symbol</th><td id="infoChemicalSymbol"></td>
@@ -232,20 +232,20 @@ body <- dashboardBody(
                               	<tr><th>Block</th><td id="infoBlock"></td>
                               	<tr><td colspan="2"><div id="btnCloseInfoBox" class="button">Close</div></td></tr>
                       		</table>')
-                                ),
-                       tags$script(src = "js/data.js"),
-                       tags$script(src = "js/periodictable.js"),
-                       tags$script(src = "js/periodictableinfobox.js"),
-                       tags$script(src = "js/periodictabledisplay.js"),
-                       tags$script(src = "js/periodictablepage.js"),
-                       useShinyjs()
-                       ),
-                      tags$div(id = "myelmBox",
-                        box(title = "Plot adjacency matrix by selecete element",  status = "info",solidHeader = TRUE, width = 12, fluidRow(column(3, community_elm),column(3, ordering_elm), column(3, annotate_elm), column(3, alpha_elm)), collapsible = TRUE),
-                        box(width = 12, pt_by_selm))
-  
-                      )
-          
+                            ),
+                            tags$script(src = "js/data.js"),
+                            tags$script(src = "js/periodictable.js"),
+                            tags$script(src = "js/periodictableinfobox.js"),
+                            tags$script(src = "js/periodictabledisplay.js"),
+                            tags$script(src = "js/periodictablepage.js"),
+                            useShinyjs()
+       ),
+       tags$div(id = "myelmBox",
+                box(title = "Plot adjacency matrix by selected element",  status = "info",solidHeader = TRUE, width = 12, fluidRow(column(3, community_elm),column(3, ordering_elm), column(3, annotate_elm), column(3, alpha_elm)), collapsible = TRUE),
+                box(width = 12, pt_by_selm))
+       
+       )
+       
 ))
 
 # Render and display

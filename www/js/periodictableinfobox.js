@@ -51,8 +51,11 @@ class PeriodicTableInfoBox
       if (x.style.display === "none") {
             x.style.display = "block";
             Shiny.setInputValue("elementNmae", element.symbol);
+            document.getElementById("atomicnumberfilter").value = element.atomicnumber;
+            document.getElementById("btnApplyFilter").click();
        } else {
           x.style.display = "none";
+          document.getElementById("btnClearFilter").click();
       }
 		}
 	}
