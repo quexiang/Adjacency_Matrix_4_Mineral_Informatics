@@ -8,7 +8,7 @@ Adjacency matrix for quick exploring hidden patterns in mineral data. Here we pr
 
 - It is still in the preliminary stage and has some limitations that can be address in the futrue work.
 
-  - (1) The current application does not support automatic data update.The Mindat API was able to provide most of the datasets mentioned in our study. With the progress of the [mindat API](https://api.mindat.org/) and the gradual implementation of OpenMindat's [R] (https://github.com/quexiang/OpenMindat) and Python packages,we believe that an automatic data pipeline can be built for automatic update the adjacency matrices in our R Shiny application. 
+  - (1) The current application does not support automatic data update.The Mindat API was able to provide most of the datasets mentioned in our study. With the progress of the [mindat API](https://api.mindat.org/) and the gradual implementation of OpenMindat's [R Package](https://github.com/quexiang/OpenMindat) and Python package (plan to do),we believe that an automatic data pipeline can be built for automatic update the adjacency matrices in our R Shiny application. 
 
   - (2) The current application lacks rich filtering rules and operations to assist in browsing the adjacency matrices.A potential update is to make the matrix and data more interactive, such as using some visualization packages in JavaScript. 
   
