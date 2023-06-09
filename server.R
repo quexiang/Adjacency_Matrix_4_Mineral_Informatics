@@ -273,7 +273,7 @@ shinyServer(function(input, output, session) {
     print(case_namelist)
     return(selectInput(
       "graph_set",
-      "Data Set",
+      "Data Set Selection",
       choices = case_namelist, #elm_minerallist,#
       selected = 0 ## "em_Li"
     ))
@@ -788,7 +788,7 @@ shinyServer(function(input, output, session) {
 
     return(selectInput(
       "comm_var",
-      "Community Algorithm",
+      "Community Detection Algorithm",
       choices = comm_choices,
       selected = "optimal_comm"
     ))

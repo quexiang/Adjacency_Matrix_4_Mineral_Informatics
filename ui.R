@@ -18,7 +18,7 @@ cases_list <-{c(
 
 data_source_sel <-selectInput(
   "cases_source",
-  "Cases",
+  "Ues Cases Selection",
   choices = cases_list,
   selected = "elm_mineral_ab"
 )

@@ -5,9 +5,9 @@ account: quexiang
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9274704
-bundleId: 7322815
+bundleId: 7326404
 url: https://quexiang.shinyapps.io/Adjacency_Matrix_4_Mineral_Informatics/
-when: 1686269076.74129
-lastSyncTime: 1686269076.74131
+when: 1686344296.94838
+lastSyncTime: 1686344296.9484
 asMultiple: FALSE
 asStatic: FALSE
