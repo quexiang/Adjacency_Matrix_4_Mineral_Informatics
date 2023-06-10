@@ -57,7 +57,7 @@
 {
     cursor: pointer;
     cursor: hand;
-    color:#ffffff;
+    color: #ffffff;
     position: absolute;
     right: 16px;
     top: 8px;
@@ -65,10 +65,10 @@
     line-height: 42px;
 }
 
-A:link {text-decoration: none; color:#FFFFFF; outline : none; border : 0;}
-A:visited {text-decoration: none; color:#FFFFFF; outline : none; border : 0;}
-A:active {text-decoration: none; color:#FFFFFF; outline : none; border : 0;}
-A:hover {text-decoration: underline; color:#FFFFFF; outline : none; border : 0;}
+A:link {text-decoration: none; color:#9ecafa; outline : none; border : 0;}
+A:visited {text-decoration: none; color:#9ecafa; outline : none; border : 0;}
+A:active {text-decoration: none; color:#9ecafa; outline : none; border : 0;}
+A:hover {text-decoration: underline; color:#9ecafa; outline : none; border : 0;}
 
 .button
 {
@@ -349,4 +349,20 @@ input[type=radio]
 .pblock
 {
     background-color: #fdff8c;
+}
+
+img[alt$=">"] {
+  float: right;
+}
+
+img[alt$="<"] {
+  float: left;
+}
+
+img[alt$="><"] {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: auto;
+  float: none!important;
 }
