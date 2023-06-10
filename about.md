@@ -19,6 +19,9 @@
 
 - Some of the datasets have weigted edges - you may optionally set the alpha level of the plot to correspond to these weights.
 
+- For two big datasets use cases, we integrated the **[<font color= #00000>Interactive Periodic Table in JavaScript version 1.0</font>](https://www.codedrome.com/interactive-periodic-table-in-javascript/)** into our shiny application to organize and quickly display the adjacency matrix by selecting chemical elements. 
+
+
 
 
 
