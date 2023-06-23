@@ -4,4 +4,4 @@
 
 - You may find interesting patterns in the adjacency matrix. When you select an element in the Periodic Table, if it is one of the ore-forming elements. The adjacency matrix corresponding to the element will appear at the bottom of the page. You can reorder the matrix by selecting different metric.
 
-- We reused the Periodic table [via](https://www.codedrome.com/interactive-periodic-table-in-javascript) 
+- We reused the periodic table from this  [project](https://www.codedrome.com/interactive-periodic-table-in-javascript) 
