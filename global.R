@@ -2071,3 +2071,236 @@ if(file.exists("data/loc_U.RData")) {
   loc_U_edge_list <- graph$edges
   save(loc_U_node_list, loc_U_edge_list, file = "data/loc_U.RData")
 }
+
+
+
+# ===========================================================================
+# [新增] Mindat API 关联挖掘与预测模块 
+# ===========================================================================
+library(shinythemes)
+library(arules)
+library(DT)
+library(stringr)
+library(OpenMindat)
+library(httr)
+library(jsonlite)
+
+`%+%` <- function(x, y) paste0(x, y)
+
+CACHE_DIR <- "data_cache"
+dir.create(CACHE_DIR, showWarnings = FALSE, recursive = TRUE)
+
+AVAILABLE_COUNTRIES <- sort(c(
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
+  "Antarctica", "Argentina", "Armenia", "Australia", "Austria",
+  "Azerbaijan", "Bahamas", "Bangladesh", "Belarus", "Belgium",
+  "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina",
+  "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso",
+  "Burundi", "Cambodia", "Cameroon", "Canada", "Cape Verde",
+  "Central African Republic", "Chad", "Chile", "China", "Colombia",
+  "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba",
+  "Cyprus", "Czech Republic", "Denmark", "Djibouti",
+  "Dominican Republic", "DR Congo", "Ecuador", "Egypt",
+  "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia",
+  "Eswatini", "Ethiopia", "Fiji", "Finland", "France",
+  "Gabon", "Gambia", "Georgia", "Germany", "Ghana",
+  "Greece", "Greenland", "Guatemala", "Guinea", "Guinea-Bissau",
+  "Guyana", "Haiti", "Honduras", "Hungary", "Iceland",
+  "India", "Indonesia", "Iran", "Iraq", "Ireland",
+  "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan",
+  "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo",
+  "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
+  "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania",
+  "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives",
+  "Mali", "Malta", "Mauritania", "Mauritius", "Mexico",
+  "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco",
+  "Mozambique", "Myanmar", "Namibia", "Nepal", "Netherlands",
+  "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
+  "North Macedonia", "Norway", "Oman", "Pakistan", "Palau",
+  "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru",
+  "Philippines", "Poland", "Portugal", "Qatar", "Romania",
+  "Russia", "Rwanda", "Saudi Arabia", "Senegal", "Serbia",
+  "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
+  "Solomon Islands", "Somalia", "South Africa", "South Korea",
+  "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname",
+  "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan",
+  "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga",
+  "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan",
+  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom",
+  "Uruguay", "USA", "Uzbekistan", "Vanuatu", "Vatican City",
+  "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+))
+
+load_country_data <- function(country_name, api_key) {
+  cache_file <- file.path(CACHE_DIR,
+    paste0(gsub("[^A-Za-z0-9_]", "_", country_name), ".rds"))
+
+  if (file.exists(cache_file)) {
+    cat(sprintf("  [Cache] Loading %s from local...\n", country_name))
+    result <- readRDS(cache_file)
+    return(result)
+  }
+
+  cat(sprintf("  [API] Fetching %s data from Mindat...\n", country_name))
+  mindat_connection(api_key)
+
+  locs <- localities_list_country(country_name, expand = "~all")
+  mineral_dict <- minerals_ima_list()
+  mineral_map <- setNames(mineral_dict$name, as.character(mineral_dict$id))
+
+  locality_minerals <- data.frame(
+    locality_id = locs$id, locality_name = locs$txt,
+    mineral_list = character(nrow(locs)), stringsAsFactors = FALSE
+  )
+  for (i in seq_len(nrow(locs))) {
+    ids <- locs$geomaterials[[i]]
+    if (length(ids) > 0) {
+      mins <- mineral_map[as.character(ids)]
+      mins <- unique(na.omit(mins))
+      locality_minerals$mineral_list[i] <- paste(mins, collapse = ";")
+    }
+  }
+  locality_minerals <- locality_minerals[locality_minerals$mineral_list != "", ]
+
+  mineral_split <- lapply(locality_minerals$mineral_list, function(x) {
+    mins <- strsplit(x, ";")[[1]]; mins <- trimws(mins); mins[mins != ""]
+  })
+  names(mineral_split) <- locality_minerals$locality_id
+  lm_df <- data.frame(
+    locality_id = rep(locality_minerals$locality_id, sapply(mineral_split, length)),
+    mineral     = unlist(mineral_split), stringsAsFactors = FALSE
+  )
+  trans <- as(split(lm_df$mineral, lm_df$locality_id), "transactions")
+
+  result <- list(trans = trans, n_localities = length(trans),
+                 n_minerals = ncol(trans), all_minerals = sort(colnames(trans)))
+  saveRDS(result, cache_file)
+  return(result)
+}
+
+predict_minerals <- function(known_minerals, target_minerals, trans_data,
+                              min_support, min_confidence, min_lift, top_n,
+                              algorithm = "Apriori") {
+
+  all_mins <- colnames(trans_data)
+  n_known  <- length(known_minerals)
+  rule_maxlen <- max(n_known + 1L, 4L)
+  minlen_val  <- max(n_known + 1L, 2L)
+
+  use_targets <- !is.null(target_minerals) && length(target_minerals) > 0
+  if (use_targets) {
+    valid_tg <- target_minerals[target_minerals %in% all_mins]
+    if (length(valid_tg) == 0) return(data.frame())
+    candidate_rhs <- valid_tg
+  } else {
+    n_trans <- length(trans_data)
+    min_abs_count <- max(1L, as.integer(ceiling(min_support * n_trans)))
+    freq_abs <- sort(itemFrequency(trans_data, type = "absolute"), decreasing = TRUE)
+    freq_abs <- freq_abs[freq_abs >= min_abs_count]
+    candidate_rhs <- setdiff(names(freq_abs), known_minerals)
+    candidate_rhs <- head(candidate_rhs, 200)
+  }
+  if (length(candidate_rhs) == 0) return(data.frame())
+
+  rules_all <- tryCatch({
+    if (algorithm == "Apriori") {
+      apriori(trans_data,
+        parameter = list(supp = min_support, conf = min_confidence,
+                         target = "rules",
+                         minlen = minlen_val, maxlen = rule_maxlen),
+        control = list(verbose = FALSE))
+    } else if (algorithm == "FP-Growth") {
+      itemsets <- fpgrowth(trans_data,
+        parameter = list(supp = min_support, minlen = minlen_val,
+                         maxlen = rule_maxlen),
+        control = list(verbose = FALSE))
+      ruleInduction(itemsets, trans_data, confidence = min_confidence)
+    } else {
+      itemsets <- eclat(trans_data,
+        parameter = list(supp = min_support, minlen = minlen_val,
+                         maxlen = rule_maxlen),
+        control = list(verbose = FALSE))
+      ruleInduction(itemsets, trans_data, confidence = min_confidence)
+    }
+  }, error = function(e) NULL)
+
+  if (is.null(rules_all) || length(rules_all) == 0) return(data.frame())
+  rules_all <- rules_all[!is.redundant(rules_all)]
+
+  rhs_raw <- as.character(labels(rhs(rules_all)))
+  rhs_clean <- gsub("[{}]", "", rhs_raw)
+  q_all    <- quality(rules_all)
+
+  coarse_keep <- which(rhs_clean %in% candidate_rhs & q_all$lift >= min_lift)
+  if (length(coarse_keep) == 0) { rm(rules_all); return(data.frame()) }
+
+  rules_sub   <- rules_all[coarse_keep]
+  q_sub       <- q_all[coarse_keep, ]
+  rhs_sub     <- rhs_clean[coarse_keep]
+  lhs_raw_sub <- as.character(labels(lhs(rules_sub)))
+  lhs_clean_sub <- gsub("[{}]", "", lhs_raw_sub)
+
+  rm(rules_all, rhs_raw, rhs_clean, q_all, coarse_keep, lhs_raw_sub)
+
+  lhs_split <- strsplit(lhs_clean_sub, ",\\s*")
+  n_sub     <- nrow(q_sub)
+  results_list <- vector("list", length(candidate_rhs))
+  idx <- 0
+
+  for (j in seq_len(n_sub)) {
+    lhs_i <- lhs_split[[j]]
+    matched <- intersect(lhs_i, known_minerals)
+    if (length(matched) < n_known) next
+
+    mr    <- length(matched) / length(lhs_i)
+    score <- mr * q_sub$lift[j]
+
+    idx <- idx + 1
+    results_list[[idx]] <- data.frame(
+      Predicted      = rhs_sub[j],
+      Rule_LHS       = paste(lhs_i, collapse = ", "),
+      Rule_RHS       = rhs_sub[j],
+      Full_Rule      = paste0("{", paste(lhs_i, collapse = ", "), "} => {", rhs_sub[j], "}"),
+      Matched_Input  = paste(matched, collapse = ", "),
+      Match_Ratio    = round(mr, 2),
+      Support        = round(q_sub$support[j], 4),
+      Confidence     = round(q_sub$confidence[j], 4),
+      Lift           = round(q_sub$lift[j], 2),
+      Combined_Score = round(score, 2),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  rm(lhs_split, q_sub, rules_sub)
+  if (idx == 0) return(data.frame())
+
+  results <- do.call(rbind, results_list[1:idx])
+
+  results %>%
+    group_by(Predicted) %>%
+    slice_max(order_by = Combined_Score, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    arrange(desc(Combined_Score)) %>%
+    head(top_n) %>%
+    mutate(Rank = row_number()) %>%
+    select(Rank, everything())
+}
+
+build_network <- function(pred_df, known_mins) {
+  if (nrow(pred_df) == 0) return(NULL)
+  edges <- data.frame(from = character(), to = character(), lift = numeric(), stringsAsFactors = FALSE)
+  for (i in seq_len(nrow(pred_df))) {
+    lhs_items <- trimws(strsplit(pred_df$Rule_LHS[i], ",")[[1]])
+    for (lhs_min in lhs_items) {
+      edges <- rbind(edges, data.frame(
+        from = lhs_min, to = pred_df$Predicted[i],
+        lift = pred_df$Lift[i], stringsAsFactors = FALSE
+      ))
+    }
+  }
+  g <- graph_from_data_frame(edges, directed = TRUE)
+  node_type <- ifelse(V(g)$name %in% known_mins, "Known", "Predicted")
+  V(g)$type  <- node_type
+  V(g)$color <- ifelse(node_type == "Known", "#3498db", "#e74c3c")
+  list(graph = g, edges = edges)
+}
