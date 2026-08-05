@@ -250,3 +250,85 @@ body <- dashboardBody(
 
 # Render and display
 dashboardPage(header, sidebar, body, title = title)
+
+
+
+# ===========================================================================
+    # [新增] Mindat API 矿物关联挖掘与推荐系统模块
+    # ===========================================================================
+    box(
+      title = "Mineral Association Recommendation System (Mindat API)", 
+      status = "primary", 
+      solidHeader = TRUE, 
+      width = 12,
+      sidebarLayout(
+        sidebarPanel(width = 4,
+          div(class = "section-box",
+            h4("Step 1 - Data Preparation", style = "margin-top: 0;"),
+            selectInput("country", "Select country:", choices = AVAILABLE_COUNTRIES, selected = "USA"),
+            passwordInput("api_key", "Mindat API Key:", value = "321e35e57066ccb129a9d9af7ffe1958"),
+            actionButton("load_data", "Load Data", icon = icon("cloud-download-alt"), class = "btn-primary", style = "width: 100%;"),
+            br(), br(), uiOutput("data_status")
+          ),
+          div(class = "section-box",
+            h4("Step 2 - Mineral Attribute Filter (optional)", style = "margin-top: 0;"),
+            selectInput("crystal_sys", "Crystal System:",
+              choices = c("(any)" = "", "Triclinic", "Monoclinic", "Orthorhombic", "Tetragonal", "Trigonal", "Hexagonal", "Cubic", "Amorphous"),
+              selected = ""),
+            sliderInput("hardness_range", "Mohs Hardness Range:", min = 0, max = 10, value = c(0, 10), step = 0.5),
+            textInput("elem_input", "Chemical Elements (comma separated):", value = "", placeholder = "e.g.: Cu, Fe, S"),
+            selectInput("lustre_type", "Lustre:",
+              choices = c("(any)" = "", "Metallic", "Sub-Metallic", "Vitreous", "Adamantine", "Resinous", "Greasy", "Pearly", "Silky", "Dull", "Earthy", "Waxy"),
+              selected = ""),
+            fluidRow(
+              column(6, actionButton("apply_filter", "Apply Filter", icon = icon("filter"), class = "btn-info", style = "width: 100%;")),
+              column(6, actionButton("reset_filter", "Reset Filter", icon = icon("undo"), class = "btn-default", style = "width: 100%;"))
+            ),
+            br(), uiOutput("filter_status")
+          ),
+          div(class = "section-box",
+            h4("Step 3 - Mineral Query", style = "margin-top: 0;"),
+            selectizeInput("known_minerals", label = "Known minerals (required):", choices = NULL, multiple = TRUE,
+              options = list(placeholder = "Type mineral name...", maxItems = 20, plugins = list("remove_button"))),
+            selectizeInput("target_mineral", label = "Prediction target (optional):", choices = NULL, multiple = TRUE,
+              options = list(placeholder = "Leave blank for all...", maxItems = 10, plugins = list("remove_button")))
+          ),
+          div(class = "section-box",
+            h4("Step 4 - Parameters", style = "margin-top: 0;"),
+            selectInput("algo", "Mining Algorithm:", choices = c("Apriori", "FP-Growth", "Eclat"), selected = "Apriori"),
+            numericInput("min_supp", "Minimum Support:", value = 0.0001, min = 0.00001, max = 0.1, step = 0.0001),
+            numericInput("min_conf", "Minimum Confidence:", value = 0.3, min = 0.1, max = 1.0, step = 0.05),
+            numericInput("min_lift", "Minimum Lift:", value = 1.0, min = 0.5, max = 50, step = 0.5),
+            sliderInput("top_n", "Top N results:", min = 5, max = 100, value = 20, step = 5)
+          ),
+          hr(),
+          fluidRow(
+            column(8, actionButton("predict_btn", "Run Prediction", icon = icon("search"), class = "btn-success btn-lg", style = "width: 100%;")),
+            column(4, actionButton("clear_btn", "Clear", icon = icon("trash"), class = "btn-default", style = "width: 100%;"))
+          ),
+          br(),
+          downloadButton("download_csv", "Export CSV", class = "btn-info", style = "width: 100%;")
+        ),
+        mainPanel(width = 8,
+          tabsetPanel(id = "mindat_main_tabs",
+            tabPanel("Recommendations", icon = icon("list-alt"),
+              br(), uiOutput("warning_box"),
+              h4("Recommended Minerals"),
+              DT::dataTableOutput("results_table"),
+              br(), p(textOutput("query_info"), style = "color: #888; font-size: 12px;")),
+            tabPanel("Rule Details", icon = icon("code"),
+              br(), DT::dataTableOutput("rule_details_table")),
+            tabPanel("Co-occurrence Network", icon = icon("project-diagram"),
+              br(), plotOutput("network_plot", height = "700px")),
+            tabPanel("Database", icon = icon("database"),
+              br(), uiOutput("db_info"),
+              h4("Top 20 Most Frequent Minerals"),
+              DT::dataTableOutput("freq_table"))
+          )
+        )
+      )
+    )
+  )
+)
+
+
