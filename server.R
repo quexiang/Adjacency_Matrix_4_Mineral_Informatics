@@ -1263,5 +1263,229 @@ shinyServer(function(input, output, session) {
   })
   
   #shinyjs::runjs("initJS();")#"document.body.addEventListener('click', function() {alert('hello')});")  
-  
+# ===========================================================================
+  # [新增] Mindat API 关联挖掘与推荐系统后端逻辑
+  # ===========================================================================
+  trans_data    <- reactiveVal(NULL)
+  data_ready    <- reactiveVal(FALSE)
+  data_info     <- reactiveVal(list(country = "", n_loc = 0, n_min = 0))
+  all_mins      <- reactiveVal(NULL)
+  filtered_mins <- reactiveVal(NULL)
+  pred_result   <- reactiveVal(NULL)
+  query_str     <- reactiveVal("")
+  elapsed_t     <- reactiveVal(0)
+
+  observeEvent(input$load_data, {
+    country <- input$country; api_key <- input$api_key
+    if (is.null(api_key) || trimws(api_key) == "") {
+      showNotification("Please enter a valid Mindat API Key.", type = "error", duration = 5)
+      return()
+    }
+    withProgress(message = paste("Processing", country, "..."), value = 0, {
+      incProgress(0.1, detail = "Connecting...")
+      result <- tryCatch({ load_country_data(country, api_key) },
+        error = function(e) { showNotification(paste("Error:", e$message), type = "error"); NULL })
+      if (is.null(result)) return()
+      incProgress(0.9, detail = "Finalizing...")
+      trans_data(result$trans)
+      data_ready(TRUE)
+      all_mins(result$all_minerals)
+      filtered_mins(result$all_minerals)
+      data_info(list(country = country, n_loc = result$n_localities, n_min = result$n_minerals))
+      updateSelectizeInput(session, "known_minerals", choices = filtered_mins(), server = TRUE)
+      updateSelectizeInput(session, "target_mineral", choices = filtered_mins(), server = TRUE)
+      showNotification(sprintf("%s loaded successfully.", country), type = "message", duration = 5)
+    })
+  })
+
+  output$data_status <- renderUI({
+    if (!data_ready())
+      return(div(style = "padding:8px; background:#fdf2e9; border-radius:4px;", icon("warning"), " No data loaded."))
+    info <- data_info()
+    div(style = "padding:8px; background:#d5f5e3; border-radius:4px;",
+      icon("check-circle"), " ", info$country, ": ", format(info$n_loc, big.mark = ","), " localities")
+  })
+
+  observeEvent(input$clear_btn, {
+    updateSelectizeInput(session, "known_minerals", selected = character(0))
+    updateSelectizeInput(session, "target_mineral", selected = character(0))
+    pred_result(NULL); query_str(""); elapsed_t(0)
+    updateSelectInput(session, "crystal_sys", selected = "")
+    updateSliderInput(session, "hardness_range", value = c(0, 10))
+    updateTextInput(session, "elem_input", value = "")
+    updateSelectInput(session, "lustre_type", selected = "")
+    if (data_ready()) {
+      filtered_mins(all_mins())
+      updateSelectizeInput(session, "known_minerals", choices = all_mins(), server = TRUE)
+      updateSelectizeInput(session, "target_mineral", choices = all_mins(), server = TRUE)
+    }
+  })
+
+  observeEvent(input$apply_filter, {
+    if (!data_ready()) {
+      showNotification("Please load data first.", type = "warning", duration = 3)
+      return()
+    }
+    has_crystal <- !is.null(input$crystal_sys) && input$crystal_sys != ""
+    has_lustre  <- !is.null(input$lustre_type) && input$lustre_type != ""
+    has_elem    <- !is.null(input$elem_input) && trimws(input$elem_input) != ""
+    is_hardness <- !is.null(input$hardness_range) && (input$hardness_range[1] > 0 || input$hardness_range[2] < 10)
+
+    if (!has_crystal && !has_lustre && !has_elem && !is_hardness) {
+      filtered_mins(all_mins())
+      updateSelectizeInput(session, "known_minerals", choices = all_mins(), server = TRUE)
+      updateSelectizeInput(session, "target_mineral", choices = all_mins(), server = TRUE)
+      return()
+    }
+
+    country_mins <- all_mins()
+    api_key <- isolate(input$api_key)
+
+    withProgress(message = "Querying Mindat...", value = 0, {
+      result_sets <- list()
+      if (has_crystal) {
+        crystal_mins <- tryCatch({ mindat_connection(api_key); res <- geomaterials_crystal_system(input$crystal_sys); if (!is.null(res) && "name" %in% names(res)) unique(res$name) else character(0) }, error = function(e) character(0))
+        result_sets[["crystal"]] <- crystal_mins
+      }
+      if (is_hardness) {
+        hard_mins <- tryCatch({ mindat_connection(api_key); res <- geomaterials_hardness_range(input$hardness_range[1], input$hardness_range[2]); if (!is.null(res) && "name" %in% names(res)) unique(res$name) else character(0) }, error = function(e) character(0))
+        result_sets[["hardness"]] <- hard_mins
+      }
+      if (has_elem) {
+        elem_vec <- trimws(strsplit(input$elem_input, "[,;]+")[[1]])
+        elem_mins <- tryCatch({ mindat_connection(api_key); res <- geomaterials_contain_any_elems(elem_vec); if (!is.null(res) && "name" %in% names(res)) unique(res$name) else character(0) }, error = function(e) character(0))
+        result_sets[["elements"]] <- elem_mins
+      }
+      if (has_lustre) {
+        lustre_mins <- tryCatch({ mindat_connection(api_key); res <- geomaterials_lustretype(input$lustre_type); if (!is.null(res) && "name" %in% names(res)) unique(res$name) else character(0) }, error = function(e) character(0))
+        result_sets[["lustre"]] <- lustre_mins
+      }
+
+      if (length(result_sets) == 1) {
+        candidates <- intersect(result_sets[[1]], country_mins)
+      } else {
+        candidates <- Reduce(intersect, result_sets)
+        candidates <- intersect(candidates, country_mins)
+      }
+      filtered_mins(sort(candidates))
+    })
+
+    updateSelectizeInput(session, "known_minerals", choices = filtered_mins(), server = TRUE)
+    updateSelectizeInput(session, "target_mineral", choices = filtered_mins(), server = TRUE)
+  })
+
+  observeEvent(input$reset_filter, {
+    updateSelectInput(session, "crystal_sys", selected = "")
+    updateSliderInput(session, "hardness_range", value = c(0, 10))
+    updateTextInput(session, "elem_input", value = "")
+    updateSelectInput(session, "lustre_type", selected = "")
+    if (data_ready()) {
+      filtered_mins(all_mins())
+      updateSelectizeInput(session, "known_minerals", choices = all_mins(), server = TRUE)
+      updateSelectizeInput(session, "target_mineral", choices = all_mins(), server = TRUE)
+    }
+  })
+
+  output$filter_status <- renderUI({
+    if (!data_ready()) return(NULL)
+    n_total  <- length(all_mins())
+    n_filter <- length(filtered_mins())
+    div(style = "padding:6px; background:#d5f5e3; border-radius:4px; font-size:12px;",
+      "Candidates: ", tags$b(format(n_filter, big.mark=",")), " / ", format(n_total, big.mark=","))
+  })
+
+  observeEvent(input$predict_btn, {
+    if (!data_ready()) {
+      showNotification("Please load data first.", type = "error", duration = 4); return()
+    }
+    known_mins <- input$known_minerals
+    if (is.null(known_mins) || length(known_mins) == 0) {
+      showNotification("Please select at least one known mineral.", type = "warning", duration = 4); return()
+    }
+    target_mins <- input$target_mineral
+    if (length(target_mins) == 0) target_mins <- NULL
+
+    am <- all_mins()
+    valid_k <- known_mins[known_mins %in% am]
+    query_str(paste(valid_k, collapse = ", "))
+
+    t_start <- Sys.time()
+    withProgress(message = "Mining rules...", value = 0, {
+      results <- predict_minerals(
+        known_minerals  = valid_k, target_minerals = target_mins,
+        trans_data      = trans_data(),
+        min_support     = input$min_supp, min_confidence = input$min_conf,
+        min_lift        = input$min_lift, top_n = input$top_n,
+        algorithm       = input$algo
+      )
+    })
+    t_end <- Sys.time()
+    elapsed_t(round(as.numeric(difftime(t_end, t_start, units = "secs")), 1))
+    pred_result(list(results = results, warnings = NULL))
+  })
+
+  output$query_info <- renderText({
+    res <- pred_result(); q <- query_str()
+    if (is.null(res) || q == "") return("")
+    paste0("Query: ", q, "  |  Results: ", nrow(res$results), "  |  Time: ", elapsed_t(), "s")
+  })
+
+  output$results_table <- DT::renderDataTable({
+    res <- pred_result()
+    if (is.null(res) || nrow(res$results) == 0)
+      return(datatable(data.frame(Message = "Select minerals and click Run Prediction."), options = list(dom = "t"), rownames = FALSE))
+
+    df <- data.frame(
+      Rank                = res$results$Rank,
+      `Recommended Mineral` = res$results$Predicted,
+      Score               = res$results$Combined_Score,
+      Lift                = res$results$Lift,
+      Confidence          = res$results$Confidence,
+      Support             = res$results$Support,
+      check.names = FALSE, stringsAsFactors = FALSE
+    )
+    datatable(df, rownames = FALSE, options = list(pageLength = 15)) %>%
+      formatRound(columns = 3:6, digits = c(2, 2, 4, 4))
+  })
+
+  output$rule_details_table <- DT::renderDataTable({
+    res <- pred_result()
+    if (is.null(res) || nrow(res$results) == 0)
+      return(datatable(data.frame(Message = "No results."), options = list(dom = "t"), rownames = FALSE))
+    df <- res$results[, c("Rank", "Predicted", "Full_Rule", "Match_Ratio", "Support", "Confidence", "Lift", "Combined_Score")]
+    datatable(df, rownames = FALSE)
+  })
+
+  output$network_plot <- renderPlot({
+    res <- pred_result()
+    if (is.null(res) || nrow(res$results) == 0) return(NULL)
+    net <- build_network(res$results, input$known_minerals)
+    if (is.null(net)) return(NULL)
+    g <- net$graph
+    plot(g, vertex.size = 10, vertex.label = V(g)$name, vertex.color = V(g)$color)
+  })
+
+  output$db_info <- renderUI({
+    if (!data_ready()) return(p("No data loaded."))
+    info <- data_info()
+    p("Loaded ", info$country, " with ", info$n_loc, " localities.")
+  })
+
+  output$freq_table <- DT::renderDataTable({
+    if (!data_ready()) return(datatable(data.frame(Info = "No data"), options = list(dom = "t"), rownames = FALSE))
+    tdata <- trans_data()
+    fa <- sort(itemFrequency(tdata, type = "absolute"), decreasing = TRUE)
+    n <- min(20, length(fa))
+    df <- data.frame(Rank = 1:n, Mineral = names(fa)[1:n], Count = as.integer(fa[1:n]))
+    datatable(df, rownames = FALSE)
+  })
+
+  output$download_csv <- downloadHandler(
+    filename = function() paste0("mineral_prediction_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv"),
+    content = function(file) {
+      res <- pred_result()
+      if (!is.null(res) && nrow(res$results) > 0) write.csv(res$results, file, row.names = FALSE)
+    }
+  )
+
 })
